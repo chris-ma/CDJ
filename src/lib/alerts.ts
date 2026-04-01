@@ -3,7 +3,7 @@ import type { WaterfallStage } from '@/types/metrics'
 import type { ContentAsset } from '@/types/content'
 import type { KeywordRow } from '@/types/seo'
 import type { ICPPipelineRow } from '@/types/pipeline'
-import { CDJ_STAGE_LABELS } from '@/types/cdj'
+import { CDJ_STAGE_LABELS, ICP_LABELS } from '@/types/cdj'
 
 /** Stage Drop-Off Flag — conv rate > 15% below benchmark (spec §4) */
 function stageDropOffAlerts(
@@ -59,10 +59,10 @@ function icpImbalanceAlerts(rows: ICPPipelineRow[]): Alert[] {
         type: 'icp-imbalance' as const,
         severity: 'amber' as const,
         icp: r.icp,
-        headline: `${r.ICP_LABELS[icp]} pipeline imbalance detected`,
+        headline: `${ICP_LABELS[r.icp]} pipeline imbalance detected`,
         diagnosis: isQualityStrong
-          ? `${r.ICP_LABELS[icp]} quality is strong — revenue share exceeds MQL share by ${Math.abs(gap)}pp. Invest in top-of-funnel volume.`
-          : `${r.ICP_LABELS[icp]} revenue share is ${Math.abs(gap)}pp below MQL share. Review qualification criteria or sales handoff.`,
+          ? `${ICP_LABELS[r.icp]} quality is strong — revenue share exceeds MQL share by ${Math.abs(gap)}pp. Invest in top-of-funnel volume.`
+          : `${ICP_LABELS[r.icp]} revenue share is ${Math.abs(gap)}pp below MQL share. Review qualification criteria or sales handoff.`,
         drillDownPath: `/diagnostics/pipeline?icp=${r.icp}`,
       }
     })
@@ -81,7 +81,7 @@ function seoGapAlerts(keywords: KeywordRow[]): Alert[] {
       stage: k.stage,
       headline: `SEO gap at ${CDJ_STAGE_LABELS[k.stage]} stage`,
       diagnosis: k.rank === null
-        ? `Not ranking for "${k.exampleQuery}" — no visibility at the ${CDJ_STAGE_LABELS[k.stage]} intent tier for ${k.ICP_LABELS[icp]}.`
+        ? `Not ranking for "${k.exampleQuery}" — no visibility at the ${CDJ_STAGE_LABELS[k.stage]} intent tier for ${ICP_LABELS[k.icp]}.`
         : `Ranking #${k.rank} for "${k.exampleQuery}" — outside top 10 at the ${CDJ_STAGE_LABELS[k.stage]} intent tier.`,
       drillDownPath: `/diagnostics/seo?icp=${k.icp}&stage=${k.stage}`,
     }))

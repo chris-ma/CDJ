@@ -7,8 +7,8 @@ import { ContextBar } from '@/pages/Diagnostics/ContextBar'
 import { RAGBadge } from '@/components/RAGBadge/RAGBadge'
 import { SkeletonLoader } from '@/components/SkeletonLoader/SkeletonLoader'
 import { RankSparkline } from './RankSparkline'
-import { ALL_STAGES, CDJ_STAGE_LABELS } from '@/types/cdj'
-import type { CDJStage } from '@/types/cdj'
+import { ALL_STAGES, CDJ_STAGE_LABELS, ICP_SUB_SEGMENTS, SUB_SEGMENT_LABELS } from '@/types/cdj'
+import type { CDJStage, SubSegment } from '@/types/cdj'
 import type { KeywordRow, GapStatus } from '@/types/seo'
 
 const GAP_LABELS: Record<GapStatus, string> = {
@@ -36,9 +36,15 @@ const INTENT_LABELS: Record<KeywordRow['intentType'], string> = {
 interface StageAccordionProps {
   stage: CDJStage
   keywords: KeywordRow[]
+  showStageBadge?: boolean
 }
 
-function StageAccordion({ stage, keywords }: StageAccordionProps) {
+interface SubSegmentAccordionProps {
+  subSegment: SubSegment
+  keywords: KeywordRow[]
+}
+
+function StageAccordion({ stage, keywords, showStageBadge = false }: StageAccordionProps) {
   const [open, setOpen] = useState(false)
 
   if (keywords.length === 0) return null
@@ -75,7 +81,14 @@ function StageAccordion({ stage, keywords }: StageAccordionProps) {
             <div key={kw.id} className="px-4 py-3 bg-white grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-center">
               <div>
                 <p className="text-[13px] font-medium text-[#0F172A]">"{kw.exampleQuery}"</p>
-                <p className="text-[11px] text-[#64748B]">{INTENT_LABELS[kw.intentType]}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-[11px] text-[#64748B]">{INTENT_LABELS[kw.intentType]}</p>
+                  {showStageBadge && (
+                    <span className="text-[10px] font-medium text-[#475569] bg-[#F1F5F9] border border-[#CBD5E1] rounded px-1.5 py-0.5">
+                      {CDJ_STAGE_LABELS[kw.stage]}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="text-center">
                 <p className="text-[11px] text-[#64748B]">Rank</p>
@@ -100,11 +113,61 @@ function StageAccordion({ stage, keywords }: StageAccordionProps) {
   )
 }
 
+function SubSegmentAccordion({ subSegment, keywords }: SubSegmentAccordionProps) {
+  const [open, setOpen] = useState(false)
+
+  if (keywords.length === 0) return null
+
+  const worstStatus = keywords.some(k => k.ragStatus === 'red')
+    ? 'red'
+    : keywords.some(k => k.ragStatus === 'amber')
+    ? 'amber'
+    : keywords.some(k => k.ragStatus === 'grey')
+    ? 'grey'
+    : 'green'
+
+  return (
+    <div className="border border-[#CBD5E1] rounded-[8px] overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-[#F8FAFC] transition-colors text-left"
+      >
+        <div className="flex items-center gap-3">
+          {open
+            ? <ChevronDown className="w-4 h-4 text-[#64748B]" aria-hidden="true" />
+            : <ChevronRight className="w-4 h-4 text-[#64748B]" aria-hidden="true" />
+          }
+          <span className="text-[15px] font-semibold text-[#0F172A]">{SUB_SEGMENT_LABELS[subSegment]}</span>
+          <span className="text-[11px] text-[#64748B]">{keywords.length} {keywords.length === 1 ? 'keyword' : 'keywords'}</span>
+        </div>
+        <RAGBadge status={worstStatus} size="sm" />
+      </button>
+
+      {open && (
+        <div className="divide-y divide-[#CBD5E1] border-t border-[#CBD5E1]">
+          {ALL_STAGES.map(s => {
+            const stageKeywords = keywords.filter(k => k.stage === s)
+            return (
+              <StageAccordion key={s} stage={s} keywords={stageKeywords} showStageBadge={false} />
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function SEOPanel() {
   const { selectedICP, setSelectedICP, selectedSubSegment, setSelectedSubSegment } = useAppStore()
   const { stage } = useURLFilters()
 
   const { data: keywords, isLoading, isError } = useSEOQuery(selectedICP, stage, selectedSubSegment)
+
+  // Show sub-segment grouping when a specific ICP is selected but no sub-segment filter is active
+  const showSubSegmentView = selectedICP !== 'all' && selectedSubSegment === null
+
+  const subSegments = showSubSegmentView ? ICP_SUB_SEGMENTS[selectedICP as Exclude<typeof selectedICP, 'all'>] : []
 
   return (
     <div className="flex flex-col h-full">
@@ -121,7 +184,9 @@ export default function SEOPanel() {
         <div className="mb-4">
           <h1 className="text-[20px] font-semibold text-[#0F172A]">SEO & Keyword Gap Map</h1>
           <p className="text-[13px] text-[#64748B] mt-0.5">
-            Visibility by CDJ intent stage — organised by where in the journey you are (or aren't) ranking.
+            {showSubSegmentView
+              ? 'Visibility by sub-segment — expand a segment to see keyword gaps by CDJ stage.'
+              : 'Visibility by CDJ intent stage — organised by where in the journey you are (or aren\'t) ranking.'}
           </p>
         </div>
 
@@ -140,12 +205,16 @@ export default function SEOPanel() {
         ) : (
           <>
             <div className="space-y-3">
-              {ALL_STAGES.map(s => {
-                const stageKeywords = (keywords ?? []).filter(k => k.stage === s)
-                return (
-                  <StageAccordion key={s} stage={s} keywords={stageKeywords} />
-                )
-              })}
+              {showSubSegmentView
+                ? subSegments.map(ss => {
+                    const ssKeywords = (keywords ?? []).filter(k => k.subSegment === ss)
+                    return <SubSegmentAccordion key={ss} subSegment={ss} keywords={ssKeywords} />
+                  })
+                : ALL_STAGES.map(s => {
+                    const stageKeywords = (keywords ?? []).filter(k => k.stage === s)
+                    return <StageAccordion key={s} stage={s} keywords={stageKeywords} />
+                  })
+              }
             </div>
 
             {(keywords ?? []).length === 0 && (
