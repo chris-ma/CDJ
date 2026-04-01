@@ -67,8 +67,8 @@ const columns: Column<ICPPipelineRow & { id: string }>[] = [
 ]
 
 export default function PipelinePanel() {
-  const { selectedICP, setSelectedICP } = useAppStore()
-  const { data: allRows, isLoading, isError } = usePipelineQuery()
+  const { selectedICP, setSelectedICP, selectedSubSegment, setSelectedSubSegment } = useAppStore()
+  const { data: allRows, isLoading, isError } = usePipelineQuery(selectedICP, selectedSubSegment)
 
   const rows = allRows ? allRows.map(r => ({ ...r, id: r.icp })) : []
   const icpARow = allRows?.find(r => r.icp === 'icp-a')
@@ -79,6 +79,8 @@ export default function PipelinePanel() {
       <ContextBar
         icp={selectedICP}
         onICPChange={setSelectedICP}
+        subSegment={selectedSubSegment}
+        onSubSegmentChange={setSelectedSubSegment}
         panelTitle="ICP Pipeline Balance"
       />
 

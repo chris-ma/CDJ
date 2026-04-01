@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { getWaterfallData } from '@/services/waterfall.service'
-import type { ICP } from '@/types/cdj'
+import type { ICP, SubSegment } from '@/types/cdj'
 
-export function useWaterfallQuery(icp: ICP) {
+export function useWaterfallQuery(icp: ICP, subSegment?: SubSegment | null) {
   return useQuery({
-    queryKey: ['waterfall', icp],
-    queryFn: () => getWaterfallData(icp),
+    queryKey: ['waterfall', icp, subSegment ?? null],
+    queryFn: () => getWaterfallData(icp, subSegment),
   })
 }

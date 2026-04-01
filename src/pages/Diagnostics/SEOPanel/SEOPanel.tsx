@@ -101,10 +101,10 @@ function StageAccordion({ stage, keywords }: StageAccordionProps) {
 }
 
 export default function SEOPanel() {
-  const { selectedICP, setSelectedICP } = useAppStore()
+  const { selectedICP, setSelectedICP, selectedSubSegment, setSelectedSubSegment } = useAppStore()
   const { stage } = useURLFilters()
 
-  const { data: keywords, isLoading, isError } = useSEOQuery(selectedICP, stage)
+  const { data: keywords, isLoading, isError } = useSEOQuery(selectedICP, stage, selectedSubSegment)
 
   return (
     <div className="flex flex-col h-full">
@@ -112,6 +112,8 @@ export default function SEOPanel() {
         icp={selectedICP}
         stage={stage}
         onICPChange={setSelectedICP}
+        subSegment={selectedSubSegment}
+        onSubSegmentChange={setSelectedSubSegment}
         panelTitle="SEO & Keyword Gap Map"
       />
 

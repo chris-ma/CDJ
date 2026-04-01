@@ -2,13 +2,14 @@ import { Printer } from 'lucide-react'
 import { useScorecardQuery } from '@/hooks/queries/useScorecardQuery'
 import { useAlerts } from '@/hooks/useAlerts'
 import { useAppStore } from '@/store/useAppStore'
+import { ICPSelector } from '@/components/ICPSelector/ICPSelector'
 import { ScorecardTable } from './ScorecardTable'
 import { AlertBanner } from '@/components/AlertBanner/AlertBanner'
 import { SkeletonLoader } from '@/components/SkeletonLoader/SkeletonLoader'
 
 export default function ExecScorecard() {
-  const { selectedICP } = useAppStore()
-  const { data: cells, isLoading, isError } = useScorecardQuery(selectedICP)
+  const { selectedICP, setSelectedICP, selectedSubSegment, setSelectedSubSegment } = useAppStore()
+  const { data: cells, isLoading, isError } = useScorecardQuery(selectedICP, selectedSubSegment)
   const { topAlert } = useAlerts()
 
   function handleExport() {
@@ -18,21 +19,29 @@ export default function ExecScorecard() {
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1536px] mx-auto">
       {/* Page header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="text-[20px] font-semibold text-[#0F172A]">Exec Scorecard</h1>
           <p className="text-[13px] text-[#64748B] mt-0.5">
             Last 30 days vs. 90-day benchmark
           </p>
         </div>
-        <button
-          onClick={handleExport}
-          aria-label="Export scorecard as PDF"
-          className="flex items-center gap-2 px-3 py-2 rounded-[8px] border border-[#CBD5E1] bg-white text-[13px] text-[#64748B] hover:border-[#1D4ED8] hover:text-[#1D4ED8] transition-colors shadow-card"
-        >
-          <Printer className="w-4 h-4" aria-hidden="true" />
-          <span className="hidden sm:inline">Export snapshot</span>
-        </button>
+        <div className="flex items-start gap-3">
+          <ICPSelector
+            value={selectedICP}
+            onChange={setSelectedICP}
+            subSegment={selectedSubSegment}
+            onSubSegmentChange={setSelectedSubSegment}
+          />
+          <button
+            onClick={handleExport}
+            aria-label="Export scorecard as PDF"
+            className="flex items-center gap-2 px-3 py-2 rounded-[8px] border border-[#CBD5E1] bg-white text-[13px] text-[#64748B] hover:border-[#1D4ED8] hover:text-[#1D4ED8] transition-colors shadow-card shrink-0"
+          >
+            <Printer className="w-4 h-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Export snapshot</span>
+          </button>
+        </div>
       </div>
 
       {/* RAG table */}
@@ -49,7 +58,7 @@ export default function ExecScorecard() {
             Failed to load scorecard data. Please refresh the page.
           </div>
         )}
-        {cells && <ScorecardTable cells={cells} />}
+        {cells && <ScorecardTable cells={cells} subSegment={selectedSubSegment} />}
       </div>
 
       {/* Auto-callout */}

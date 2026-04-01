@@ -3,6 +3,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { AlertBanner } from '@/components/AlertBanner/AlertBanner'
 import { Bell } from 'lucide-react'
 import type { Alert } from '@/types/cdj'
+import { ICP_LABELS } from '@/types/cdj'
 
 const ALERT_TYPE_LABELS: Record<Alert['type'], string> = {
   'stage-drop-off': 'Stage Drop-Off',
@@ -45,7 +46,7 @@ export default function AlertsPage() {
               <div className="flex items-center justify-between mb-1 px-1">
                 <span className="text-[11px] text-[#64748B] font-medium uppercase tracking-wide">
                   {ALERT_TYPE_LABELS[alert.type]}
-                  {alert.icp !== 'all' && ` · ${alert.icp === 'icp-a' ? 'ICP A' : 'ICP B'}`}
+                  {alert.icp !== 'all' && ` · ${ICP_LABELS[alert.icp]}`}
                 </span>
               </div>
               <AlertBanner

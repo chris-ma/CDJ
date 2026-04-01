@@ -88,10 +88,10 @@ const columns: Column<ContentAsset & { id: string }>[] = [
 ]
 
 export default function ContentPanel() {
-  const { selectedICP, setSelectedICP } = useAppStore()
+  const { selectedICP, setSelectedICP, selectedSubSegment, setSelectedSubSegment } = useAppStore()
   const { stage } = useURLFilters()
 
-  const { data: assets, isLoading, isError } = useContentQuery(selectedICP, stage)
+  const { data: assets, isLoading, isError } = useContentQuery(selectedICP, stage, selectedSubSegment)
 
   // Sort: worst stalls first, then accelerators, then blind spots
   const rows = assets
@@ -110,6 +110,8 @@ export default function ContentPanel() {
         icp={selectedICP}
         stage={stage}
         onICPChange={setSelectedICP}
+        subSegment={selectedSubSegment}
+        onSubSegmentChange={setSelectedSubSegment}
         panelTitle="Content Stall / Accelerator"
       />
 

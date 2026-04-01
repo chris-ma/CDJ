@@ -1,17 +1,23 @@
 import { useNavigate } from 'react-router-dom'
 import type { ScorecardCell } from '@/types/metrics'
-import type { CDJStage, ICP } from '@/types/cdj'
-import { ALL_STAGES, CDJ_STAGE_LABELS, ICP_LABELS, RAG_STATUS_LABELS } from '@/types/cdj'
+import type { CDJStage, ICP, SubSegment } from '@/types/cdj'
+import { ALL_STAGES, CDJ_STAGE_LABELS, ICP_LABELS, RAG_STATUS_LABELS, SUB_SEGMENT_LABELS } from '@/types/cdj'
 import { RAGBadge } from '@/components/RAGBadge/RAGBadge'
 import { formatPercent, formatDelta } from '@/lib/formatters'
 
-const ICPS: Exclude<ICP, 'all'>[] = ['icp-a', 'icp-b']
-
-interface CellTooltipProps {
-  cell: ScorecardCell
+interface ScorecardTableProps {
+  cells: ScorecardCell[]
+  subSegment?: SubSegment | null
+  loading?: boolean
 }
 
-function CellTooltip({ cell }: CellTooltipProps) {
+interface RowHeader {
+  key: string
+  label: string
+  icp: Exclude<ICP, 'all'>
+}
+
+function CellTooltip({ cell }: { cell: ScorecardCell }) {
   return (
     <span className="sr-only">
       {RAG_STATUS_LABELS[cell.status]}:
@@ -21,13 +27,16 @@ function CellTooltip({ cell }: CellTooltipProps) {
   )
 }
 
-interface ScorecardTableProps {
-  cells: ScorecardCell[]
-  loading?: boolean
-}
-
-export function ScorecardTable({ cells, loading = false }: ScorecardTableProps) {
+export function ScorecardTable({ cells, subSegment = null, loading = false }: ScorecardTableProps) {
   const navigate = useNavigate()
+
+  // Derive row headers from the cells present (handles all/icp-a/icp-b/sub-segment views)
+  const icpKeys = [...new Set(cells.map(c => c.icp as Exclude<ICP, 'all'>))]
+  const rowHeaders: RowHeader[] = icpKeys.map(icp => ({
+    key: subSegment ? subSegment : icp,
+    label: subSegment ? SUB_SEGMENT_LABELS[subSegment] : ICP_LABELS[icp],
+    icp,
+  }))
 
   function getCell(icp: Exclude<ICP, 'all'>, stage: CDJStage): ScorecardCell | undefined {
     return cells.find(c => c.icp === icp && c.stage === stage)
@@ -42,14 +51,13 @@ export function ScorecardTable({ cells, loading = false }: ScorecardTableProps) 
   if (loading) {
     return (
       <div className="animate-pulse space-y-3" aria-label="Loading scorecard" aria-busy="true">
-        {ICPS.map(icp => (
-          <div key={icp} className="h-16 bg-gray-200 rounded-lg" />
+        {rowHeaders.map(r => (
+          <div key={r.key} className="h-16 bg-gray-200 rounded-lg" />
         ))}
       </div>
     )
   }
 
-  /* ── Desktop table ─────────────────────────────── */
   return (
     <>
       {/* Desktop */}
@@ -57,7 +65,7 @@ export function ScorecardTable({ cells, loading = false }: ScorecardTableProps) 
         <table className="w-full border-collapse rounded-lg overflow-hidden shadow-card">
           <thead>
             <tr className="bg-[#0F2B4C] text-white">
-              <th scope="col" className="px-4 py-3 text-left text-[13px] font-semibold w-24">ICP</th>
+              <th scope="col" className="px-4 py-3 text-left text-[13px] font-semibold w-36">Segment</th>
               {ALL_STAGES.map(stage => (
                 <th key={stage} scope="col" className="px-4 py-3 text-center text-[13px] font-semibold">
                   {CDJ_STAGE_LABELS[stage]}
@@ -66,11 +74,9 @@ export function ScorecardTable({ cells, loading = false }: ScorecardTableProps) 
             </tr>
           </thead>
           <tbody>
-            {ICPS.map((icp, rowIdx) => (
-              <tr key={icp} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-[#F1F5F9]'}>
-                <td className="px-4 py-3 text-[13px] font-semibold text-[#0F172A]">
-                  {ICP_LABELS[icp]}
-                </td>
+            {rowHeaders.map(({ key, label, icp }, rowIdx) => (
+              <tr key={key} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-[#F1F5F9]'}>
+                <td className="px-4 py-3 text-[13px] font-semibold text-[#0F172A]">{label}</td>
                 {ALL_STAGES.map(stage => {
                   const cell = getCell(icp, stage)
                   if (!cell) return (
@@ -78,14 +84,13 @@ export function ScorecardTable({ cells, loading = false }: ScorecardTableProps) 
                       <RAGBadge status="grey" size="sm" />
                     </td>
                   )
-
                   const isClickable = cell.status === 'red' || cell.status === 'amber'
                   return (
                     <td key={stage} className="px-4 py-3 text-center">
                       <button
                         onClick={() => handleCellClick(cell)}
                         disabled={!isClickable}
-                        aria-label={`${ICP_LABELS[icp]} ${CDJ_STAGE_LABELS[stage]}: ${RAG_STATUS_LABELS[cell.status]}, ${formatPercent(cell.conversionRate)} conversion (benchmark ${formatPercent(cell.benchmark)})`}
+                        aria-label={`${label} ${CDJ_STAGE_LABELS[stage]}: ${RAG_STATUS_LABELS[cell.status]}, ${formatPercent(cell.conversionRate)} conversion (benchmark ${formatPercent(cell.benchmark)})`}
                         className={[
                           'inline-flex justify-center rounded-pill transition-all',
                           isClickable
@@ -107,10 +112,10 @@ export function ScorecardTable({ cells, loading = false }: ScorecardTableProps) 
 
       {/* Mobile — stacked cards */}
       <div className="md:hidden space-y-4">
-        {ICPS.map(icp => (
-          <div key={icp} className="bg-white rounded-lg shadow-card border border-[#CBD5E1] overflow-hidden">
+        {rowHeaders.map(({ key, label, icp }) => (
+          <div key={key} className="bg-white rounded-lg shadow-card border border-[#CBD5E1] overflow-hidden">
             <div className="bg-[#0F2B4C] px-4 py-2">
-              <p className="text-white text-[13px] font-semibold">{ICP_LABELS[icp]}</p>
+              <p className="text-white text-[13px] font-semibold">{label}</p>
             </div>
             <div className="divide-y divide-[#CBD5E1]">
               {ALL_STAGES.map(stage => {
@@ -121,7 +126,6 @@ export function ScorecardTable({ cells, loading = false }: ScorecardTableProps) 
                     <RAGBadge status="grey" size="sm" />
                   </div>
                 )
-
                 const isClickable = cell.status === 'red' || cell.status === 'amber'
                 return (
                   <button

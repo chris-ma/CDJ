@@ -1,4 +1,4 @@
-import type { CDJStage, ICP, RAGStatus } from './cdj'
+import type { CDJStage, ICP, RAGStatus, SubSegment } from './cdj'
 
 export type VelocitySignal = 'stall' | 'accelerator' | 'blind-spot' | 'neutral'
 
@@ -11,4 +11,5 @@ export interface ContentAsset {
   signal: VelocitySignal
   ragStatus: RAGStatus
   leadCount: number
+  subSegment?: SubSegment
 }

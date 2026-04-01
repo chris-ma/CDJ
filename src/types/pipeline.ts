@@ -1,4 +1,4 @@
-import type { ICP, RAGStatus } from './cdj'
+import type { ICP, RAGStatus, SubSegment } from './cdj'
 
 export type ImbalanceSignal = 'high-quality' | 'volume-gap' | 'balanced'
 
@@ -10,4 +10,5 @@ export interface ICPPipelineRow {
   revenueShare: number
   signal: ImbalanceSignal
   ragStatus: RAGStatus
+  subSegment?: SubSegment
 }

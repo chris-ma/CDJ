@@ -8,10 +8,10 @@ import { SkeletonLoader } from '@/components/SkeletonLoader/SkeletonLoader'
 import type { WaterfallStage } from '@/types/metrics'
 
 export default function CDJWaterfall() {
-  const { selectedICP, setSelectedICP } = useAppStore()
+  const { selectedICP, setSelectedICP, selectedSubSegment, setSelectedSubSegment } = useAppStore()
   const navigate = useNavigate()
 
-  const { data: stages, isLoading, isError } = useWaterfallQuery(selectedICP)
+  const { data: stages, isLoading, isError } = useWaterfallQuery(selectedICP, selectedSubSegment)
 
   function handleStageClick(stage: WaterfallStage) {
     if (stage.ragStatus === 'red' || stage.ragStatus === 'amber') {
@@ -36,7 +36,12 @@ export default function CDJWaterfall() {
             )}
           </p>
         </div>
-        <ICPSelector value={selectedICP} onChange={setSelectedICP} />
+        <ICPSelector
+          value={selectedICP}
+          onChange={setSelectedICP}
+          subSegment={selectedSubSegment}
+          onSubSegmentChange={setSelectedSubSegment}
+        />
       </div>
 
       {/* Error state */}

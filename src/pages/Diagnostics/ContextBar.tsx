@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import type { ICP, CDJStage } from '@/types/cdj'
+import type { ICP, CDJStage, SubSegment } from '@/types/cdj'
 import { CDJ_STAGE_LABELS } from '@/types/cdj'
 import { ICPSelector } from '@/components/ICPSelector/ICPSelector'
 
@@ -8,10 +8,12 @@ interface ContextBarProps {
   icp: ICP
   stage?: CDJStage
   onICPChange: (icp: ICP) => void
+  subSegment?: SubSegment | null
+  onSubSegmentChange?: (sub: SubSegment | null) => void
   panelTitle: string
 }
 
-export function ContextBar({ icp, stage, onICPChange, panelTitle }: ContextBarProps) {
+export function ContextBar({ icp, stage, onICPChange, subSegment, onSubSegmentChange, panelTitle }: ContextBarProps) {
   const navigate = useNavigate()
 
   return (
@@ -42,8 +44,14 @@ export function ContextBar({ icp, stage, onICPChange, panelTitle }: ContextBarPr
         Last 30 days vs. 90-day benchmark
       </span>
 
-      {/* ICP selector */}
-      <ICPSelector value={icp} onChange={onICPChange} className="text-[13px]" />
+      {/* ICP selector with sub-segment chips */}
+      <ICPSelector
+        value={icp}
+        onChange={onICPChange}
+        subSegment={subSegment}
+        onSubSegmentChange={onSubSegmentChange}
+        className="text-[13px]"
+      />
     </div>
   )
 }

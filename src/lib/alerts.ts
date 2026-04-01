@@ -25,7 +25,7 @@ function stageDropOffAlerts(
         icp,
         stage: s.stage as CDJStage,
         headline: `${CDJ_STAGE_LABELS[s.stage as CDJStage]} stage is underperforming`,
-        diagnosis: `${icp === 'icp-a' ? 'ICP A' : 'ICP B'} conversion at ${CDJ_STAGE_LABELS[s.stage as CDJStage]} is ${Math.abs(deltaPercent)}% below the 90-day benchmark.`,
+        diagnosis: `${ICP_LABELS[icp]} conversion at ${CDJ_STAGE_LABELS[s.stage as CDJStage]} is ${Math.abs(deltaPercent)}% below the 90-day benchmark.`,
         drillDownPath: `/diagnostics/content?icp=${icp}&stage=${s.stage}`,
       }
     })
@@ -59,10 +59,10 @@ function icpImbalanceAlerts(rows: ICPPipelineRow[]): Alert[] {
         type: 'icp-imbalance' as const,
         severity: 'amber' as const,
         icp: r.icp,
-        headline: `${r.icp === 'icp-a' ? 'ICP A' : 'ICP B'} pipeline imbalance detected`,
+        headline: `${r.ICP_LABELS[icp]} pipeline imbalance detected`,
         diagnosis: isQualityStrong
-          ? `${r.icp === 'icp-a' ? 'ICP A' : 'ICP B'} quality is strong — revenue share exceeds MQL share by ${Math.abs(gap)}pp. Invest in top-of-funnel volume.`
-          : `${r.icp === 'icp-a' ? 'ICP A' : 'ICP B'} revenue share is ${Math.abs(gap)}pp below MQL share. Review qualification criteria or sales handoff.`,
+          ? `${r.ICP_LABELS[icp]} quality is strong — revenue share exceeds MQL share by ${Math.abs(gap)}pp. Invest in top-of-funnel volume.`
+          : `${r.ICP_LABELS[icp]} revenue share is ${Math.abs(gap)}pp below MQL share. Review qualification criteria or sales handoff.`,
         drillDownPath: `/diagnostics/pipeline?icp=${r.icp}`,
       }
     })
@@ -81,7 +81,7 @@ function seoGapAlerts(keywords: KeywordRow[]): Alert[] {
       stage: k.stage,
       headline: `SEO gap at ${CDJ_STAGE_LABELS[k.stage]} stage`,
       diagnosis: k.rank === null
-        ? `Not ranking for "${k.exampleQuery}" — no visibility at the ${CDJ_STAGE_LABELS[k.stage]} intent tier for ${k.icp === 'icp-a' ? 'ICP A' : 'ICP B'}.`
+        ? `Not ranking for "${k.exampleQuery}" — no visibility at the ${CDJ_STAGE_LABELS[k.stage]} intent tier for ${k.ICP_LABELS[icp]}.`
         : `Ranking #${k.rank} for "${k.exampleQuery}" — outside top 10 at the ${CDJ_STAGE_LABELS[k.stage]} intent tier.`,
       drillDownPath: `/diagnostics/seo?icp=${k.icp}&stage=${k.stage}`,
     }))

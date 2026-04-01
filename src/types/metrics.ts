@@ -1,4 +1,4 @@
-import type { CDJStage, ICP, RAGStatus } from './cdj'
+import type { CDJStage, ICP, RAGStatus, SubSegment } from './cdj'
 
 export interface ScorecardCell {
   icp: ICP
@@ -7,6 +7,7 @@ export interface ScorecardCell {
   conversionRate: number
   benchmark: number
   deltaPercent: number
+  subSegment?: SubSegment
 }
 
 export interface WaterfallStage {
@@ -17,6 +18,7 @@ export interface WaterfallStage {
   benchmark: number | null
   ragStatus: RAGStatus
   connected: boolean             // false = Phase 4 blind spot
+  subSegment?: SubSegment
 }
 
 export interface BenchmarkMap {
