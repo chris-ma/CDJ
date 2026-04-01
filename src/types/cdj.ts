@@ -12,16 +12,16 @@ export type ICP = 'icp-a' | 'icp-b' | 'all'
 
 export const CDJ_STAGE_LABELS: Record<CDJStage, string> = {
   trigger: 'Trigger',
-  consideration: 'Consideration',
-  evaluation: 'Evaluation',
-  purchase: 'Purchase',
-  'post-purchase': 'Post-Purchase',
-  'loyalty-loop': 'Loyalty Loop',
+  consideration: 'Shortlisting',
+  evaluation: 'Due Diligence',
+  purchase: 'Mandate',
+  'post-purchase': 'Onboarding',
+  'loyalty-loop': 'Growth & Advocacy',
 }
 
 export const ICP_LABELS: Record<ICP, string> = {
-  'icp-a': 'ICP A',
-  'icp-b': 'ICP B',
+  'icp-a': 'Advisers',
+  'icp-b': 'Institutional',
   all: 'All',
 }
 
