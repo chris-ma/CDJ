@@ -1,9 +1,10 @@
 import { useAppStore } from '@/store/useAppStore'
 import { useURLFilters } from '@/hooks/useURLFilters'
-import { getContentData } from '@/services/content.service'
+import { useContentQuery } from '@/hooks/queries/useContentQuery'
 import { ContextBar } from '@/pages/Diagnostics/ContextBar'
 import { DataTable, type Column } from '@/components/DataTable/DataTable'
 import { RAGBadge } from '@/components/RAGBadge/RAGBadge'
+import { SkeletonLoader } from '@/components/SkeletonLoader/SkeletonLoader'
 import { VelocityBar } from './VelocityBar'
 import { CDJ_STAGE_LABELS } from '@/types/cdj'
 import type { ContentAsset } from '@/types/content'
@@ -90,16 +91,18 @@ export default function ContentPanel() {
   const { selectedICP, setSelectedICP } = useAppStore()
   const { stage } = useURLFilters()
 
-  const assets = getContentData(selectedICP, stage)
+  const { data: assets, isLoading, isError } = useContentQuery(selectedICP, stage)
 
   // Sort: worst stalls first, then accelerators, then blind spots
-  const sorted = [...assets].sort((a, b) => {
-    if (a.velocityDeltaDays === null) return 1
-    if (b.velocityDeltaDays === null) return -1
-    return (b.velocityDeltaDays ?? 0) - (a.velocityDeltaDays ?? 0)
-  })
-
-  const rows = sorted.map(a => ({ ...a }))
+  const rows = assets
+    ? [...assets]
+        .sort((a, b) => {
+          if (a.velocityDeltaDays === null) return 1
+          if (b.velocityDeltaDays === null) return -1
+          return (b.velocityDeltaDays ?? 0) - (a.velocityDeltaDays ?? 0)
+        })
+        .map(a => ({ ...a }))
+    : []
 
   return (
     <div className="flex flex-col h-full">
@@ -121,17 +124,31 @@ export default function ContentPanel() {
           </p>
         </div>
 
-        <div className="bg-white rounded-[12px] border border-[#CBD5E1] shadow-card overflow-hidden">
-          <DataTable
-            columns={columns}
-            rows={rows}
-            emptyTitle="No content assets tracked"
-            emptyBody="Tag content assets in your CRM or Marketo to start tracking velocity signals."
-            getRowClassName={row =>
-              row.leadCount < 10 ? 'opacity-60' : ''
-            }
-          />
-        </div>
+        {isError && (
+          <div className="rounded-[8px] border border-[#FCA5A5] bg-[#FEE2E2] px-4 py-3 text-[13px] text-[#991B1B] mb-4">
+            Failed to load content data. Please refresh the page.
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="space-y-2" aria-label="Loading content data">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonLoader key={i} height="h-10" />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-[12px] border border-[#CBD5E1] shadow-card overflow-hidden">
+            <DataTable
+              columns={columns}
+              rows={rows}
+              emptyTitle="No content assets tracked"
+              emptyBody="Tag content assets in your CRM or Marketo to start tracking velocity signals."
+              getRowClassName={row =>
+                row.leadCount < 10 ? 'opacity-60' : ''
+              }
+            />
+          </div>
+        )}
 
         <p className="mt-3 text-[11px] text-[#64748B]">
           ⚠ Rows with fewer than 10 leads have insufficient sample size for reliable signal.

@@ -1,8 +1,9 @@
 import { useAppStore } from '@/store/useAppStore'
-import { getPipelineData } from '@/services/pipeline.service'
+import { usePipelineQuery } from '@/hooks/queries/usePipelineQuery'
 import { ContextBar } from '@/pages/Diagnostics/ContextBar'
 import { StackedBalanceChart } from './StackedBalanceChart'
 import { RAGBadge } from '@/components/RAGBadge/RAGBadge'
+import { SkeletonLoader } from '@/components/SkeletonLoader/SkeletonLoader'
 import { DataTable, type Column } from '@/components/DataTable/DataTable'
 import type { ICPPipelineRow } from '@/types/pipeline'
 import { ICP_LABELS } from '@/types/cdj'
@@ -67,12 +68,11 @@ const columns: Column<ICPPipelineRow & { id: string }>[] = [
 
 export default function PipelinePanel() {
   const { selectedICP, setSelectedICP } = useAppStore()
-  const allRows = getPipelineData()
+  const { data: allRows, isLoading, isError } = usePipelineQuery()
 
-  const rows = allRows.map(r => ({ ...r, id: r.icp }))
-
-  const icpARow = allRows.find(r => r.icp === 'icp-a')
-  const icpBRow = allRows.find(r => r.icp === 'icp-b')
+  const rows = allRows ? allRows.map(r => ({ ...r, id: r.icp })) : []
+  const icpARow = allRows?.find(r => r.icp === 'icp-a')
+  const icpBRow = allRows?.find(r => r.icp === 'icp-b')
 
   return (
     <div className="flex flex-col h-full">
@@ -90,17 +90,32 @@ export default function PipelinePanel() {
           </p>
         </div>
 
+        {isError && (
+          <div className="rounded-[8px] border border-[#FCA5A5] bg-[#FEE2E2] px-4 py-3 text-[13px] text-[#991B1B] mb-6">
+            Failed to load pipeline data. Please refresh the page.
+          </div>
+        )}
+
         {/* Stacked chart */}
         <div className="bg-white rounded-[12px] border border-[#CBD5E1] shadow-card p-4 md:p-6 mb-6">
           <h2 className="text-[15px] font-semibold text-[#0F172A] mb-4">
             Funnel Share by ICP
           </h2>
-          <StackedBalanceChart rows={allRows} />
+          {isLoading ? (
+            <SkeletonLoader height="h-40" aria-label="Loading chart" />
+          ) : allRows && (
+            <StackedBalanceChart rows={allRows} />
+          )}
         </div>
 
         {/* Signal interpretation */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {[icpARow, icpBRow].map(row => {
+          {isLoading ? (
+            <>
+              <SkeletonLoader height="h-24" rounded="rounded-[12px]" />
+              <SkeletonLoader height="h-24" rounded="rounded-[12px]" />
+            </>
+          ) : [icpARow, icpBRow].map(row => {
             if (!row) return null
             const mqlRevenueGap = row.revenueShare - row.mqlShare
             return (
@@ -143,12 +158,20 @@ export default function PipelinePanel() {
             <h2 className="text-[15px] font-semibold text-[#0F172A]">Pipeline Share Detail</h2>
           </div>
           <div className="p-4">
-            <DataTable
-              columns={columns}
-              rows={rows}
-              emptyTitle="No pipeline data"
-              emptyBody="Connect your CRM to populate ICP pipeline balance data."
-            />
+            {isLoading ? (
+              <div className="space-y-2" aria-label="Loading pipeline data">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <SkeletonLoader key={i} height="h-8" />
+                ))}
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                rows={rows}
+                emptyTitle="No pipeline data"
+                emptyBody="Connect your CRM to populate ICP pipeline balance data."
+              />
+            )}
           </div>
         </div>
       </div>

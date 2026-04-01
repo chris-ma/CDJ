@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { useURLFilters } from '@/hooks/useURLFilters'
-import { getSEOData } from '@/services/seo.service'
+import { useSEOQuery } from '@/hooks/queries/useSEOQuery'
 import { ContextBar } from '@/pages/Diagnostics/ContextBar'
 import { RAGBadge } from '@/components/RAGBadge/RAGBadge'
+import { SkeletonLoader } from '@/components/SkeletonLoader/SkeletonLoader'
 import { RankSparkline } from './RankSparkline'
 import { ALL_STAGES, CDJ_STAGE_LABELS } from '@/types/cdj'
 import type { CDJStage } from '@/types/cdj'
@@ -103,7 +104,7 @@ export default function SEOPanel() {
   const { selectedICP, setSelectedICP } = useAppStore()
   const { stage } = useURLFilters()
 
-  const keywords = getSEOData(selectedICP, stage)
+  const { data: keywords, isLoading, isError } = useSEOQuery(selectedICP, stage)
 
   return (
     <div className="flex flex-col h-full">
@@ -122,22 +123,38 @@ export default function SEOPanel() {
           </p>
         </div>
 
-        <div className="space-y-3">
-          {ALL_STAGES.map(s => {
-            const stageKeywords = keywords.filter(k => k.stage === s)
-            return (
-              <StageAccordion key={s} stage={s} keywords={stageKeywords} />
-            )
-          })}
-        </div>
-
-        {keywords.length === 0 && (
-          <div className="bg-white rounded-[12px] border border-[#CBD5E1] shadow-card p-8 text-center mt-4">
-            <p className="text-[17px] font-semibold text-[#0F172A] mb-1">No keywords configured</p>
-            <p className="text-[13px] text-[#64748B]">
-              Configure ICP-specific keyword sets in BrightEdge to populate this panel.
-            </p>
+        {isError && (
+          <div className="rounded-[8px] border border-[#FCA5A5] bg-[#FEE2E2] px-4 py-3 text-[13px] text-[#991B1B] mb-4">
+            Failed to load SEO data. Please refresh the page.
           </div>
+        )}
+
+        {isLoading ? (
+          <div className="space-y-3" aria-label="Loading SEO data">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonLoader key={i} height="h-12" rounded="rounded-[8px]" />
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {ALL_STAGES.map(s => {
+                const stageKeywords = (keywords ?? []).filter(k => k.stage === s)
+                return (
+                  <StageAccordion key={s} stage={s} keywords={stageKeywords} />
+                )
+              })}
+            </div>
+
+            {(keywords ?? []).length === 0 && (
+              <div className="bg-white rounded-[12px] border border-[#CBD5E1] shadow-card p-8 text-center mt-4">
+                <p className="text-[17px] font-semibold text-[#0F172A] mb-1">No keywords configured</p>
+                <p className="text-[13px] text-[#64748B]">
+                  Configure ICP-specific keyword sets in BrightEdge to populate this panel.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

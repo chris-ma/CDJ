@@ -1,13 +1,14 @@
 import { Printer } from 'lucide-react'
-import { getScorecardData } from '@/services/scorecard.service'
+import { useScorecardQuery } from '@/hooks/queries/useScorecardQuery'
 import { useAlerts } from '@/hooks/useAlerts'
 import { useAppStore } from '@/store/useAppStore'
 import { ScorecardTable } from './ScorecardTable'
 import { AlertBanner } from '@/components/AlertBanner/AlertBanner'
+import { SkeletonLoader } from '@/components/SkeletonLoader/SkeletonLoader'
 
 export default function ExecScorecard() {
   const { selectedICP } = useAppStore()
-  const cells = getScorecardData(selectedICP)
+  const { data: cells, isLoading, isError } = useScorecardQuery(selectedICP)
   const { topAlert } = useAlerts()
 
   function handleExport() {
@@ -36,7 +37,19 @@ export default function ExecScorecard() {
 
       {/* RAG table */}
       <div className="mb-4">
-        <ScorecardTable cells={cells} />
+        {isLoading && (
+          <div className="space-y-2" aria-label="Loading scorecard data">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonLoader key={i} height="h-10" />
+            ))}
+          </div>
+        )}
+        {isError && (
+          <div className="rounded-[8px] border border-[#FCA5A5] bg-[#FEE2E2] px-4 py-3 text-[13px] text-[#991B1B]">
+            Failed to load scorecard data. Please refresh the page.
+          </div>
+        )}
+        {cells && <ScorecardTable cells={cells} />}
       </div>
 
       {/* Auto-callout */}
